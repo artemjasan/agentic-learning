@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: pg-study
+    environment:
+      POSTGRES_USER: study
+      POSTGRES_PASSWORD: study
+      POSTGRES_DB: study
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+
+volumes:
+  pgdata:
