@@ -7,6 +7,8 @@
 **PostgreSQL** (`modules/00-postgresql/`) — **Chapter 1: Physical Storage**  
 Goal: run the environment, follow the plan in `chapters/01-physical-storage.md`, capture your conclusions (chapter **`Findings` / `Retro`**, optional personal notes).
 
+**Now:** finished **Steps A–E** (page layout, Lower/Upper, tuple header, Step E — line pointers and index). **Next — Step F:** `DELETE` a row, then inspect **`t_xmax`** via `heap_page_items` / `pgvis`; paused until the next session. Details: `chapters/01-physical-storage.md` → **Your findings** → **Where we stopped**.
+
 ## Completed
 
 *(empty for now — add chapters here as you finish them)*

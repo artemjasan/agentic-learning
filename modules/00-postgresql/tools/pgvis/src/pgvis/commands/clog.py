@@ -1,8 +1,7 @@
 import click
-import psycopg
 from rich.text import Text
 
-from pgvis.core import connect, console
+from pgvis.core import connect
 from pgvis.format import PanelBuilder
 
 
@@ -52,8 +51,6 @@ def _render(entries: list[dict], in_progress: set[int], snap_xmax: int) -> None:
         "aborted": "red",
         "in progress": "yellow bold",
     }
-
-    bar_width = 40
 
     for entry in entries:
         xid = entry["xid"]

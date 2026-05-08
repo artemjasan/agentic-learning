@@ -1,5 +1,87 @@
 # Chapter 1: Physical Storage
 
+## Plan (start here)
+
+Work through in order. Capture **your** evidence (SQL output, `pgvis` snippets, `ls` in the container) in a note file or under **Your findings** at the bottom of this chapter. The older **Findings** sections below are a *reference run*—use them only after you have tried yourself.
+
+### 1. Environment and a real heap file
+- Start Postgres (`docker compose up -d` in `modules/00-postgresql/`). Connect: `postgresql://study:study@localhost:5433/study`.
+- Create a small table with dozens of rows (or use `users` if you already have it). Run `pg_relation_filepath('your_table')`, `SELECT oid, relfilenode FROM pg_class WHERE relname = …`.
+- Inside the container, `ls` under `/var/lib/postgresql/18/docker/` until you see `base/<db_oid>/<relfilenode>*`. Notice **main**, **`_fsm`**, and **`_vm`** when they appear.
+
+### 2. One 8 KB page, mentally
+- Draw the page: 24-byte header, item pointers growing **down**, tuples growing **up**, shared free space in the middle.
+- Use **`pageinspect`**: `get_raw_page`, `page_header`, `heap_page_items` for page 0. Relate `lower`, `upper`, `lp` count to the drawing.
+- Use **`pgvis page <table> 0`** to see the same structure visually.
+
+### 3. One tuple
+- Pick one row from `heap_page_items`: `t_xmin`, `t_xmax`, `t_ctid`, `t_infomask`, column payloads.
+- Read a short string column as varlena: length + bytes. Notice **alignment** (8-byte alignment on typical builds).
+
+### 4. Line pointers and indirection
+- Explain (in your own words) why the index points at **(page, line pointer)** instead of a byte offset into the page. What can change without rewriting every index?
+
+### 5. DELETE and cleanup (preview of vacuum)
+- `DELETE` some rows; inspect the page before and after further reads. When do bytes disappear vs when does `xmax` appear first?
+- Run `VACUUM` (not `FULL`). Observe FSM / VM (`pg_freespacemap`, `pgvis fsm`, `pgvis vm`) if extensions are available.
+
+### 6. Optional stretch
+- `VACUUM FULL` on a copy of the table: when does **`relfilenode`** change while **`oid`** stays the same?
+- Skim TOAST: wide row / `repeat()` until a toast table appears.
+
+---
+
+## Your findings
+
+### My notes (simple English, for later)
+
+**Notes:** English — short reminders for later.
+
+**Where we stopped**
+
+- **Done:** Steps A–E (page layout, Lower/Upper, tuples, `ctid`, line pointers vs index).
+- **Next — Step F:** `DELETE` one row from `lesson1_items`, then `heap_page_items(get_raw_page(...))` or `pgvis page lesson1_items 0` — watch **`t_xmax`** / dead vs live. Then `VACUUM` (Step G preview).
+- **Paused:** continue next session (tomorrow).
+
+**Stack**
+
+- Docker: `docker compose up -d` in `modules/00-postgresql/`. Connect: `postgresql://study:study@localhost:5433/study`.
+- One table example: `lesson1_items`. Path on disk: `pg_relation_filepath` → e.g. `base/16384/16520`.
+  - Middle number = **database OID** (folder name under `base/`).
+  - Last number = **relfilenode** = main heap **filename** (often equals table `oid` when new).
+- In container: `ls …/base/16384/` shows file `16520` with size **8192 bytes** = **one page** (small table fits in 1 page).
+
+**Inside one 8 KB heap page**
+
+- **Page size** = 8192 bytes (default).
+- **Lower** = end of **line pointer** array (after 24-byte header). Each pointer = 4 bytes. More rows → Lower goes **up** (e.g. 40 → 44 for one more LP).
+- **Upper** = start of **tuple** bytes. Tuples pack **from the bottom** of the data area **upward** → new tuple → Upper goes **down** (smaller offset).
+- **Free space** ≈ **Upper − Lower** (the gap in the middle).
+- **Line pointer (`lp`)** = slot index on the page. **Not** the same as business primary key `id`.
+
+**Index vs line pointers (Step E)**
+
+- The index stores **tid = (block, line pointer)** — the stable logical address for that design.
+- **Byte offset and tuple length** live only in the **LP entry** on the heap page.
+- When tuples **move within the same page** (repack / prune), Postgres can **update the LP entry** (new offset/length) **without** changing **(page, lp)** — the raw offset is “hidden” under the LP slot; the index does not store it.
+
+**One tuple**
+
+- **t_hoff** = byte offset where column data starts after the tuple header (often 24).
+- **lp_len** = full tuple size on disk (header + columns + padding). Longer `text` → longer tuple (e.g. “banana” vs “apple”).
+- **t_xmin** = transaction that **created** this row version.
+- **t_xmax** = transaction that deleted/updated it, or **0** = still “alive” in MVCC terms.
+- **t_ctid** = `(page_index, line_pointer)` = **physical address** of this version. **Not permanent:** `UPDATE` / rewrite / `VACUUM FULL` can change it. **`id`** is stable; **`ctid`** is “where this version lives now.”
+
+**Tools**
+
+- `pageinspect`: `page_header(get_raw_page('table', 0))`, `heap_page_items(...)`.
+- `pgvis`: `uv run pgvis page lesson1_items 0` — same page, visual.
+
+*(Add more bullets as you go.)*
+
+---
+
 ## Findings
 
 ### Where Data Lives on Disk

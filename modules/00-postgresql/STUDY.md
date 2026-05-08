@@ -1,6 +1,6 @@
 # PostgreSQL — From Practitioner to Expert
 
-> **Ветка `study/from-scratch`:** идём по программе заново — с **главы 1**. Существующие пометки «✅» и заполненные `chapters/*.md` в дереве можно использовать как подсказку после того, как попробуешь сам; свой прогресс фиксируем в `PROGRESS.md` и в `Findings` по мере прохождения.
+> **Branch `study/from-scratch`:** replaying the curriculum from **Chapter 1**. Treat existing checkmarks and filled `chapters/*.md` as hints only *after* you try yourself; track progress in `PROGRESS.md` and in **Findings** as you go.
 
 ## Goal
 
