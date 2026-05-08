@@ -31,6 +31,16 @@ When the user says "continue" or "what's next":
 6. **Update STUDY.md Phase 2 (during)** as we work — findings, surprises, code notes
 7. When done, **write STUDY.md Phase 3 (retro)** — summary, takeaways, what we'd change, connections
 
+## Chapter Planning
+
+Every chapter starts with a doc (`chapters/NN-slug.md`) containing a `## Plan` section — the numbered route from basics to deep mechanics. Study doesn't begin until the plan exists. The plan is the first deliverable of every chapter.
+
+- Think through the topic structure before writing
+- Number sections in order from fundamentals to advanced
+- Mark out-of-scope topics that belong in later chapters
+- Update the plan as topics complete or get descoped
+- `## Findings` and `## Retro` sections are filled in during and after the chapter
+
 ## Module Structure
 
 Each topic gets a directory under `modules/`. Minimum contents:

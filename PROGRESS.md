@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1, 2, 2b, 3 complete. Next: Chapter 4 (Query execution & EXPLAIN).
+**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1, 2, 2b, 3, 4, 4b complete. Next: Chapter 5 (Query Execution & EXPLAIN).
 
 ## Completed
 
@@ -18,6 +18,14 @@ Why Postgres needs its own cache (shared memory, write ordering, pinning, lockin
 ### Chapter 3: Transactions & Basic Concurrency ✅ (2026-05-05)
 Transaction IDs (32-bit counter, virtual xids), xmin/xmax mechanics (INSERT/UPDATE/DELETE), CLOG, hint bits (reads dirtying pages), visibility rule, snapshots (xmin:xmax:xip_list), concurrent visibility experiments, row-level locking on concurrent writes, transaction ID wraparound and VACUUM FREEZE. Refactored pgvis into feature-based modules, added `pgvis sql` interactive REPL with panel-based TUI.
 
+### Chapter 4: Postgres Architecture & Query Pipeline ✅ (2026-05-08)
+Process model (postmaster, fork-per-connection, signals), connection lifecycle and measured cost (~7ms connect vs ~0.6ms query), backend private memory (work_mem per-operation multiplication), shared memory layout (Buffer Blocks/Descriptors split, XLOG, CLOG, AIO), background processes via pg_stat_activity, query pipeline (parser/analyzer/rewriter/planner/executor proved by triggering errors at each stage). Added timing to pgvis sql.
+
 ## Next Up
 
-- Chapter 4: Query execution & EXPLAIN
+### Chapter 4b: SQL Parsing Internals ✅ (2026-05-08)
+Built full pre-planner pipeline from scratch in Go: lexer (tokenizer), recursive descent parser, analyzer (with lazy catalog cache mirroring Postgres SysCache), rewriter (view expansion). Used pg_query_go to compare with real Postgres parser output. sqlparse tool with 5 commands: parse, lex, myparse, analyze, rewrite.
+
+## Next Up
+
+- Chapter 5: Query Execution & EXPLAIN

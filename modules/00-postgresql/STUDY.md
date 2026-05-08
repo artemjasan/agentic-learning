@@ -92,20 +92,24 @@ Detailed findings and retro for each chapter in `chapters/`:
 2. [Shared Buffers & Read/Write Path](chapters/02-shared-buffers.md) ✅
 3. [OS Page Cache, Double-Caching & Tuning](chapters/02b-os-page-cache.md) ✅
 4. [Transactions & Basic Concurrency](chapters/03-transactions.md) ✅
-5. Query execution & EXPLAIN
-6. Indexes (user perspective)
-7. MVCC under the hood
-8. Vacuum & bloat
-9. WAL
-10. Isolation levels & OCC
-11. Index internals
-12. Replication
-13. PgBouncer
-14. Partitioning, tablespaces & sharding
-15. Postgres under fire
-16. Breaking Postgres
-17. Writing a PostgreSQL extension
-18. TOAST deep dive
+5. [Postgres Architecture & Query Pipeline](chapters/04-architecture.md) ✅
+6. [SQL Parsing Internals](chapters/04b-parsing-internals.md) (4b) ✅
+7. [Query Execution & EXPLAIN](chapters/04-query-execution.md) — *next*
+7. Join Internals (5b)
+8. Indexes (user perspective)
+9. MVCC under the hood
+10. Vacuum & bloat
+11. WAL
+12. Isolation levels & OCC
+13. Index internals
+14. Replication
+15. PgBouncer
+16. Partitioning, tablespaces & sharding
+17. Postgres under fire
+18. Breaking Postgres
+19. Writing a PostgreSQL extension
+20. TOAST deep dive
+21. Triggers & the rule system
 
 ## Tools
 
@@ -117,3 +121,9 @@ Detailed findings and retro for each chapter in `chapters/`:
   - `pgvis locks` — lock contention and blocking
   - `pgvis clog [start end] [--last N]` — transaction commit status (CLOG)
   - `pgvis sql "QUERY"` / `pgvis sql -i` — pretty SQL output / interactive REPL with tx state
+- `tools/sqlparse/` — SQL parsing pipeline (Go, pg_query_go)
+  - `sqlparse parse "SQL"` — parse with real Postgres parser (pg_query_go)
+  - `sqlparse lex "SQL"` — tokenize with custom lexer
+  - `sqlparse myparse "SQL"` — parse with custom lexer + recursive descent parser
+  - `sqlparse analyze "SQL" [...]` — parse + analyze against real DB catalog (shows cache hits/misses)
+  - `sqlparse rewrite "SQL"` — parse + expand views (shows before/after trees)

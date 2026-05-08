@@ -1,3 +1,5 @@
+import time
+
 import click
 import psycopg
 from psycopg.pq import TransactionStatus
@@ -33,17 +35,24 @@ def _execute_and_render(
     conn: psycopg.Connection, query: str, *, show_tx: bool = False,
 ) -> None:
     try:
+        t0 = time.perf_counter()
         cur = conn.execute(query)
         if cur.description:
             rows = cur.fetchall()
+        elapsed = time.perf_counter() - t0
+
+        if cur.description:
             table = _build_results_table(cur.description, rows)
             console.print(Padding(table, (0, 0, 0, 4)))
+            console.print(Padding(Text(_format_time(elapsed), style="dim italic"), (0, 0, 0, 4)))
 
             if show_tx and conn.info.transaction_status == TransactionStatus.INTRANS:
                 sub = _build_tx_subtitle(conn)
                 console.print(Padding(sub, (0, 0, 0, 4)))
         else:
-            status = Text(cur.statusmessage or "OK", style="green")
+            status = Text()
+            status.append(cur.statusmessage or "OK", style="green")
+            status.append(f"  {_format_time(elapsed)}", style="dim italic")
             tx_sub = None
             if show_tx and conn.info.transaction_status == TransactionStatus.INTRANS:
                 tx_sub = _build_tx_subtitle(conn)
@@ -189,3 +198,11 @@ def _print_panel(content, *, subtitle: Text | None = None) -> None:
         padding=(1, 2) if not isinstance(content, Text) else (0, 2),
     )
     console.print(Padding(panel, (0, 0, 0, 2)))
+
+
+def _format_time(seconds: float) -> str:
+    if seconds < 0.001:
+        return f"{seconds * 1_000_000:.0f} µs"
+    if seconds < 1.0:
+        return f"{seconds * 1000:.2f} ms"
+    return f"{seconds:.3f} s"
