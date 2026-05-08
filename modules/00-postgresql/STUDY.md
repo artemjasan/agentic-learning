@@ -1,5 +1,7 @@
 # PostgreSQL — From Practitioner to Expert
 
+> **Ветка `study/from-scratch`:** идём по программе заново — с **главы 1**. Существующие пометки «✅» и заполненные `chapters/*.md` в дереве можно использовать как подсказку после того, как попробуешь сам; свой прогресс фиксируем в `PROGRESS.md` и в `Findings` по мере прохождения.
+
 ## Goal
 
 Go from "I use Postgres daily and know it well" to "I understand what Postgres is doing at every level — page layout, tuple lifecycle, WAL records, snapshot visibility, index internals, replication mechanics." The kind of understanding where you can diagnose weird production behavior from first principles, not just Stack Overflow.
