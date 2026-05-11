@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1, 2, 2b, 3, 4, 4b complete. Next: Chapter 5 (Query Execution & EXPLAIN).
+**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1, 2, 2b, 3, 4, 4b, 5 complete. Next: Chapter 5b (Join Internals) or Chapter 6 (Indexes).
 
 ## Completed
 
@@ -21,11 +21,12 @@ Transaction IDs (32-bit counter, virtual xids), xmin/xmax mechanics (INSERT/UPDA
 ### Chapter 4: Postgres Architecture & Query Pipeline ✅ (2026-05-08)
 Process model (postmaster, fork-per-connection, signals), connection lifecycle and measured cost (~7ms connect vs ~0.6ms query), backend private memory (work_mem per-operation multiplication), shared memory layout (Buffer Blocks/Descriptors split, XLOG, CLOG, AIO), background processes via pg_stat_activity, query pipeline (parser/analyzer/rewriter/planner/executor proved by triggering errors at each stage). Added timing to pgvis sql.
 
-## Next Up
-
 ### Chapter 4b: SQL Parsing Internals ✅ (2026-05-08)
 Built full pre-planner pipeline from scratch in Go: lexer (tokenizer), recursive descent parser, analyzer (with lazy catalog cache mirroring Postgres SysCache), rewriter (view expansion). Used pg_query_go to compare with real Postgres parser output. sqlparse tool with 5 commands: parse, lex, myparse, analyze, rewrite.
 
+### Chapter 5: Query Execution & EXPLAIN ✅ (2026-05-11)
+EXPLAIN output structure, cost model (verified by hand calculation), three scan types (Seq Scan, Index Scan, Bitmap Heap Scan) and the selectivity crossover, planner statistics (MCVs, histograms, pg_stats), three join strategies (Nested Loop, Hash Join, Merge Join), sorting (external merge vs quicksort vs top-N heapsort), work_mem effects, diagnosing bad plans. Built `pgvis explain` tool with step-by-step annotated output, strategy explanations, and cost formula breakdowns.
+
 ## Next Up
 
-- Chapter 5: Query Execution & EXPLAIN
+- Chapter 5b: Join Internals (or Chapter 6: Indexes)

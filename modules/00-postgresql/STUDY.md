@@ -94,8 +94,8 @@ Detailed findings and retro for each chapter in `chapters/`:
 4. [Transactions & Basic Concurrency](chapters/03-transactions.md) ✅
 5. [Postgres Architecture & Query Pipeline](chapters/04-architecture.md) ✅
 6. [SQL Parsing Internals](chapters/04b-parsing-internals.md) (4b) ✅
-7. [Query Execution & EXPLAIN](chapters/04-query-execution.md) — *next*
-7. Join Internals (5b)
+7. [Query Execution & EXPLAIN](chapters/05-query-execution.md) — *next*
+8. Join Internals (5b)
 8. Indexes (user perspective)
 9. MVCC under the hood
 10. Vacuum & bloat
