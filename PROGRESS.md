@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1, 2, 2b, 3, 4, 4b, 5 complete. Next: Chapter 5b (Join Internals) or Chapter 6 (Indexes).
+**PostgreSQL Deep Dive** (`modules/00-postgresql/`) — Chapters 1–6 complete. Next: Chapter 7 (MVCC Under the Hood) or Chapter 8 (Vacuum & Bloat).
 
 ## Completed
 
@@ -27,6 +27,12 @@ Built full pre-planner pipeline from scratch in Go: lexer (tokenizer), recursive
 ### Chapter 5: Query Execution & EXPLAIN ✅ (2026-05-11)
 EXPLAIN output structure, cost model (verified by hand calculation), three scan types (Seq Scan, Index Scan, Bitmap Heap Scan) and the selectivity crossover, planner statistics (MCVs, histograms, pg_stats), three join strategies (Nested Loop, Hash Join, Merge Join), sorting (external merge vs quicksort vs top-N heapsort), work_mem effects, diagnosing bad plans. Built `pgvis explain` tool with step-by-step annotated output, strategy explanations, and cost formula breakdowns.
 
+### Chapter 5b: Join Internals ✅ (2026-05-12)
+Join algorithms visualized step by step: Nested Loop (O(N×M)), Hash Join (build + probe, O(N+M)), Merge Join (sort + merge). Join types (INNER, LEFT, RIGHT, FULL) orthogonal to algorithms. Built `pgvis join` interactive slideshow with ← → navigation, showing data, strategy, step-by-step execution, and when the planner picks each.
+
+### Chapter 6: Indexes ✅ (2026-05-14)
+B-tree internals: page layout (item pointers → index tuples, high key, special area), tree structure (depth 3 for 500K rows, fan-out ~350), lookup trace (root → internal → leaf → heap → MVCC). Index-only scans + visibility map. Multi-column leftmost prefix rule. Partial indexes (skip writes for non-matching rows). Index types: Hash (O(1) but loses everything else), BRIN (min/max per block range, tiny), GIN (inverted for arrays/JSONB). Write amplification, MVCC interaction (no xmin/xmax in indexes, ghost entries). CREATE INDEX CONCURRENTLY (sort-then-build, two-pass, never blocks writes). Built `pgvis index` tools: tree, page, lookup, range.
+
 ## Next Up
 
-- Chapter 5b: Join Internals (or Chapter 6: Indexes)
+- Chapter 7: MVCC Under the Hood (or Vacuum & Bloat)

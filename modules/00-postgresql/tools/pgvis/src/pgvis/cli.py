@@ -1,6 +1,6 @@
 import click
 
-from pgvis.commands import buffers, clog, explain, fsm, locks, page, sql, vm
+from pgvis.commands import buffers, clog, explain, fsm, index, join, locks, page, sql, vm
 from pgvis.core import DEFAULT_DSN
 
 
@@ -20,3 +20,5 @@ cli.add_command(locks)
 cli.add_command(clog)
 cli.add_command(sql)
 cli.add_command(explain)
+cli.add_command(index)
+cli.add_command(join)
