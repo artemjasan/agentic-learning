@@ -58,6 +58,15 @@ Additional structure (docker-compose.yaml, bench/, Makefile, etc.) gets added as
 
 Each module gets its own `STUDY.md` that evolves through three phases: **Before** (prep), **During** (findings), **After** (retro). See `STUDY_TEMPLATE.md` at the project root for the full structure and rules.
 
+## Visualization & Teaching Rules
+
+- **Build the tool first, then study with it.** When a topic has internal structure (page layouts, tree traversals, algorithm steps), build a pgvis command to visualize it before diving into the theory. The tool-building itself is learning, and every subsequent experiment becomes easier.
+- **Don't make the user run boring queries.** Size comparisons, timing benchmarks, repetitive SELECTs — explain the result or build it into the tool. Only ask the user to run things that are genuinely interesting to observe live.
+- **Every visualization must show context.** Show the SQL query, the table names, what operation is being performed. Never show raw output without explaining what produced it.
+- **Explain every field.** Don't show raw data (page headers, hex bytes, cost numbers) without saying what it means and why it matters. If a field appears in tool output, it needs a one-line explanation.
+- **Accuracy over simplicity.** Wrong diagrams teach wrong mental models. If a sign is ≥ not ≤, if an item pointer doesn't contain the key value, get it right. Simplify the presentation, not the facts.
+- **Step-by-step slideshow with ← → navigation** is the preferred format for algorithm/traversal visualizations (joins, index lookups, range scans). Pre-compute all frames, let the user control the pace.
+
 ## Conventions
 
 - **Numbering**: modules are numbered `00`, `01`, `02`... in the order they're completed (not a dependency order)
