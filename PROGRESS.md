@@ -2,21 +2,29 @@
 
 **Branch:** `study/from-scratch` — personal track: working through the material **from scratch**, with your own hands and notes. `main` on `origin` is a friend's original lab repo that has moved on — we keep their write-ups and code as **reference**, not as “our” completed milestones.
 
+## Study protocol (with Cursor / AI)
+
+- **English:** use English for explanations, questions, and your own notes (vocabulary + consistency with upstream docs).
+- **Visualization:** treat **`pgvis`** (`modules/00-postgresql/tools/pgvis/`) as the default way to *see* heap pages, the free-space map, and the visibility map — not only raw `pageinspect` / `psql` rows.
+- **Pace (mandatory):** work in **small steps**. Each step = **full tool output** shown in the chat (e.g. complete `pgvis` screen) + **exactly one short question** to settle before moving on.
+- **Evidence:** paste the same snippets into the chapter’s **Your findings** (e.g. `chapters/01-physical-storage.md`) or a personal note file so the lab stays reproducible.
+- **Chapter files as curriculum:** when designing steps, examples, and questions, **use the matching file under** `modules/00-postgresql/chapters/*.md` **as the source of required concepts** — the **Plan** (ordered exercises), numbered sections, diagrams, and the filled-in **Findings** / **Retro** (treat those as a *reference run* after you have tried yourself, per each chapter’s intro). Stay consistent with terminology and tool commands already used there.
+
 ## Current Focus
 
-**PostgreSQL** (`modules/00-postgresql/`) — **Chapter 1: Physical Storage**  
-Goal: run the environment, follow the plan in `chapters/01-physical-storage.md`, capture your conclusions (chapter **`Findings` / `Retro`**, optional personal notes).
+**PostgreSQL** (`modules/00-postgresql/`) — **Chapter 2: Shared Buffers & Read/Write Path** (next)  
+Follow `chapters/02-shared-buffers.md` **Plan** first; same study protocol (English, `pgvis` where it fits, evidence in **Your findings**).
 
-**Now:** finished **Steps A–E** (page layout, Lower/Upper, tuple header, Step E — line pointers and index). **Next — Step F:** `DELETE` a row, then inspect **`t_xmax`** via `heap_page_items` / `pgvis`; paused until the next session. Details: `chapters/01-physical-storage.md` → **Your findings** → **Where we stopped**.
+**Chapter 1 (personal track) — where you left off:** core **Plan §1–§6** hands-on is done in the lab: heap layout, tuples, line pointers, **`DELETE` / `xmax`**, **`VACUUM`**, **`VACUUM FULL`** on a copy (**`oid` vs `relfilenode`**), **FSM / VM** (`pgvis` + `pg_visibility`), **TOAST skim** (`ch1_toast_demo` + `pgvis page --no-data` vs `pg_toast_*`). Segment files and page-size tradeoffs were covered **read / discuss** (no multi-GB demo in this clone). Optional: if you never did it, one **`ls`** in the container on `base/<db_oid>/<relfilenode>*` from Plan §1 — quick closure.
 
 ## Completed
 
-*(empty for now — add chapters here as you finish them)*
+*(Chapter 1 not moved here yet — add when you write a short **Retro** in the chapter and call the chapter “closed” for your track.)*
 
 ## Next Up
 
-- Finish Chapter 1 (heap pages, tuple header, FSM/VM, `pgvis` / `pageinspect`)
-- Then Chapter 2 — shared buffers and the read/write path
+- **Chapter 2** — `chapters/02-shared-buffers.md` (shared_buffers, read path, `pgvis buffers`, double-buffering intro toward Ch 2b)
+- Optional: Chapter 1 **Retro** paragraph in `01-physical-storage.md` + then mark Ch 1 complete in this file
 
 ## Reference — friend's `main` (upstream lab notes)
 

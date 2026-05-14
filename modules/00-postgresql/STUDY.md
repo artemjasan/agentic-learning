@@ -2,6 +2,8 @@
 
 > **Branch `study/from-scratch`:** replaying the curriculum from **Chapter 1**. Treat existing checkmarks and filled `chapters/*.md` as hints only *after* you try yourself; track progress in `PROGRESS.md` and in **Findings** as you go.
 
+**AI-assisted workflow:** See root **`PROGRESS.md`** → *Study protocol (with Cursor / AI)* — English, **`pgvis`** for visuals, **one step = full output + one question**, and **`modules/00-postgresql/chapters/*.md`** as the reference curriculum when building lessons (Plan + chapter body; use **Findings** / **Retro** only as hints after your own attempt.)
+
 ## Goal
 
 Go from "I use Postgres daily and know it well" to "I understand what Postgres is doing at every level — page layout, tuple lifecycle, WAL records, snapshot visibility, index internals, replication mechanics." The kind of understanding where you can diagnose weird production behavior from first principles, not just Stack Overflow.

@@ -5,27 +5,33 @@
 Work through in order. Capture **your** evidence (SQL output, `pgvis` snippets, `ls` in the container) in a note file or under **Your findings** at the bottom of this chapter. The older **Findings** sections below are a *reference run*—use them only after you have tried yourself.
 
 ### 1. Environment and a real heap file
+
 - Start Postgres (`docker compose up -d` in `modules/00-postgresql/`). Connect: `postgresql://study:study@localhost:5433/study`.
 - Create a small table with dozens of rows (or use `users` if you already have it). Run `pg_relation_filepath('your_table')`, `SELECT oid, relfilenode FROM pg_class WHERE relname = …`.
 - Inside the container, `ls` under `/var/lib/postgresql/18/docker/` until you see `base/<db_oid>/<relfilenode>*`. Notice **main**, **`_fsm`**, and **`_vm`** when they appear.
 
 ### 2. One 8 KB page, mentally
+
 - Draw the page: 24-byte header, item pointers growing **down**, tuples growing **up**, shared free space in the middle.
 - Use **`pageinspect`**: `get_raw_page`, `page_header`, `heap_page_items` for page 0. Relate `lower`, `upper`, `lp` count to the drawing.
 - Use **`pgvis page <table> 0`** to see the same structure visually.
 
 ### 3. One tuple
+
 - Pick one row from `heap_page_items`: `t_xmin`, `t_xmax`, `t_ctid`, `t_infomask`, column payloads.
 - Read a short string column as varlena: length + bytes. Notice **alignment** (8-byte alignment on typical builds).
 
 ### 4. Line pointers and indirection
+
 - Explain (in your own words) why the index points at **(page, line pointer)** instead of a byte offset into the page. What can change without rewriting every index?
 
 ### 5. DELETE and cleanup (preview of vacuum)
+
 - `DELETE` some rows; inspect the page before and after further reads. When do bytes disappear vs when does `xmax` appear first?
 - Run `VACUUM` (not `FULL`). Observe FSM / VM (`pg_freespacemap`, `pgvis fsm`, `pgvis vm`) if extensions are available.
 
 ### 6. Optional stretch
+
 - `VACUUM FULL` on a copy of the table: when does **`relfilenode`** change while **`oid`** stays the same?
 - Skim TOAST: wide row / `repeat()` until a toast table appears.
 
@@ -39,9 +45,10 @@ Work through in order. Capture **your** evidence (SQL output, `pgvis` snippets, 
 
 **Where we stopped**
 
-- **Done:** Steps A–E (page layout, Lower/Upper, tuples, `ctid`, line pointers vs index).
-- **Next — Step F:** `DELETE` one row from `lesson1_items`, then `heap_page_items(get_raw_page(...))` or `pgvis page lesson1_items 0` — watch **`t_xmax`** / dead vs live. Then `VACUUM` (Step G preview).
-- **Paused:** continue next session (tomorrow).
+- **Done — Plan §1–§4 (your run):** env + filepath, one page (`Lower` / `Upper` / LPs), one tuple (`xmin` / `xmax` / `ctid`), line pointers vs index TID.
+- **Done — Plan §5:** `DELETE` on `lesson1_items` → **`t_xmax`** visible on dead version; **`VACUUM`** → dead LP removed / compacted layout; **`pgvis fsm`** + **`pgvis vm`** + `pg_freespacemap` / `pg_visibility` for the same table.
+- **Done — Plan §6:** **`VACUUM FULL`** on **`lesson1_ch1s6_copy`**: **`relfilenode`** changed, **`oid`** unchanged; `pgvis page` after rewrite (**`FROZEN`** on tuples until you understand VM vs tuple hints); second **`VACUUM`** aligned **VM** bits (`all_visible` / `all_frozen`). **TOAST skim:** table **`ch1_toast_demo`** — `reltoastrelid` → **`pg_toast_*`**; large incompressible payload → **`pgvis page … --no-data`** shows tiny **`len`** on main heap vs huge logical `length(note)`; **`pgvis page pg_toast.…`** shows chunk pages. **Segments / page size:** conceptual (no `*.1` segment file in this small DB); **`block_size`** = 8192 from `pg_settings`.
+- **Next:** optional Plan §1 **`ls`** in container if not done once; then **Chapter 2** (`02-shared-buffers.md`). Optional: add a short **Retro** block under your notes when you “close” Ch 1 for yourself.
 
 **Stack**
 
@@ -77,6 +84,7 @@ Work through in order. Capture **your** evidence (SQL output, `pgvis` snippets, 
 
 - `pageinspect`: `page_header(get_raw_page('table', 0))`, `heap_page_items(...)`.
 - `pgvis`: `uv run pgvis page lesson1_items 0` — same page, visual.
+- `pgvis page <table> 0 --no-data` — heap layout + **`len`** per tuple without decoding wide columns (useful for **TOAST**: compare **`len`** to logical `length(note)` from SQL).
 
 *(Add more bullets as you go.)*
 
@@ -105,6 +113,7 @@ Three default databases: `template1` (default template for CREATE DATABASE), `te
 ### Relation Forks
 
 Each table has up to 3 files:
+
 - **Main fork** (`16507`) — the heap data (pages with tuples)
 - **FSM** (`16507_fsm`) — Free Space Map, tracks free space per page so INSERT doesn't scan every page
 - **VM** (`16507_vm`) — Visibility Map, tracks all-visible and all-frozen pages; created on first VACUUM
@@ -145,6 +154,7 @@ This is different from MySQL InnoDB which uses a clustered index (data stored so
 Each tuple: 23-byte header + alignment padding + data.
 
 Header fields:
+
 - `xmin` — transaction ID that created this tuple
 - `xmax` — transaction ID that deleted/updated it (0 = alive)
 - `ctid` — physical address as (page, item_pointer_number)
@@ -152,6 +162,7 @@ Header fields:
 - `t_hoff` — offset where data starts within the tuple (always 24 for us: 23 + 1 padding)
 
 Actual data: for our `users` table (id integer, name text, email text):
+
 ```
 id=1:  24 header + 4 (int) + 7 (varlena "user_1") + 19 (varlena "user_1@example.com") = 54 bytes
 id=10: 24 header + 4 + 8 + 20 = 56 bytes
@@ -159,12 +170,14 @@ id=100: 24 header + 4 + 9 + 21 = 58 bytes
 ```
 
 Tuple sizes vary because text/varchar uses **varlena** format:
+
 - Short strings (≤126 bytes): 1-byte length header + data bytes
 - `varchar(10000)` storing "hello" = 6 bytes, not 10000 — max length is a constraint, not storage allocation
 
 ### Alignment (MAXALIGN)
 
 Tuple start offsets must be 8-byte aligned on 64-bit systems. For a 54-byte tuple:
+
 - 8192 - 54 = 8138, but 8138 isn't 8-byte aligned
 - Rounds down to 8136 → tuple at bytes 8136-8189, bytes 8190-8191 are padding
 - Cost: up to 7 "wasted" bytes per tuple
@@ -178,10 +191,12 @@ Index entry → (page 5, LP 3)  →  LP 3 says "offset 7800, len 56"  →  tuple
 ```
 
 Why indirection matters:
+
 - VACUUM compacts a page → updates LP offsets, indexes don't change
 - HOT updates → old LP redirects to new LP, indexes don't change
 
 LP flag states:
+
 - `normal` (1) — points to a live tuple
 - `redirect` (2) — HOT chain redirect
 - `dead` (3) — tombstone; tuple data removed but LP kept because indexes may still reference it
@@ -190,6 +205,7 @@ LP flag states:
 ### Filenode vs OID
 
 `relfilenode` starts equal to OID but changes when the physical file is rewritten:
+
 ```sql
 SELECT oid, relfilenode FROM pg_class WHERE relname = 'users';
 VACUUM FULL users;  -- relfilenode changes, OID stays the same
@@ -214,6 +230,7 @@ Observed: after DELETE of 101 rows + VACUUM, FSM showed ~12KB free across 3 page
 FSM stores approximate free space per page (32-byte granularity) in a binary tree. INSERT checks FSM to find a page with room.
 
 VM tracks two bits per page:
+
 - `all_visible` — all tuples visible to all transactions → VACUUM can skip, index-only scans can skip heap
 - `all_frozen` — all tuples frozen (xmin replaced with permanent marker) → never needs wraparound vacuum again
 
@@ -226,6 +243,7 @@ Tables >1GB are split: `16507`, `16507.1`, `16507.2`, etc. Compile-time setting 
 ### Page Size Tradeoffs
 
 Default 8KB. Compile-time setting (`--with-blocksize`).
+
 - Larger pages (16-32KB): better for OLAP, wide rows, sequential scans. Fewer page headers per byte. But more wasted I/O for random reads.
 - Smaller pages: better for OLTP with small random reads. But more page header overhead.
 - Rarely changed in practice — 8KB is a good general-purpose balance.
