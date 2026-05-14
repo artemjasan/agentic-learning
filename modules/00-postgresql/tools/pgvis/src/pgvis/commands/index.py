@@ -18,6 +18,7 @@ from rich.text import Text
 
 from pgvis.commands.join import _present, _read_key  # reuse navigation
 from pgvis.core import connect, console
+from pgvis.format import PanelBuilder, section_bar
 
 
 @click.group()
@@ -37,12 +38,15 @@ def index(ctx):
 def index_page(ctx, index_name, page_ref):
     """Show the physical layout of a B-tree index page.
 
-    PAGE_REF can be: root, leaf, internal, or a page number.
+    PAGE_REF can be: meta, root, leaf, internal, or a page number.
     """
     dsn = ctx.obj["dsn"]
     with connect(dsn, autocommit=True) as conn:
         meta = _get_metapage(conn, index_name)
-        if page_ref == "root":
+        if page_ref in ("meta", "0"):
+            _render_metapage(conn, index_name, meta)
+            return
+        elif page_ref == "root":
             page_num = meta["root"]
         elif page_ref == "leaf":
             page_num = _find_first_leaf(conn, index_name, meta["root"], meta["level"])
@@ -53,13 +57,12 @@ def index_page(ctx, index_name, page_ref):
             try:
                 page_num = int(page_ref)
             except ValueError:
-                console.print(f"[red]Unknown page reference: {page_ref}. Use root, leaf, internal, or a number.[/red]")
+                console.print(f"[red]Unknown page reference: {page_ref}. Use root, leaf, internal, meta, or a number.[/red]")
                 return
         _render_index_page(conn, index_name, page_num)
 
 
 def _render_index_page(conn, index_name, page_num):
-    from pgvis.format import PanelBuilder, section_bar
 
     stats = _get_page_stats(conn, index_name, page_num)
     items = _get_page_items(conn, index_name, page_num)
@@ -276,6 +279,78 @@ def _render_index_page(conn, index_name, page_num):
     p.add(bar)
 
     p.print(title=f"Index Page {page_num} ({type_label})", border_style="blue")
+
+
+def _render_metapage(conn, index_name, meta):
+
+    p = PanelBuilder()
+
+    p.add(section_bar(0x0, "METAPAGE (block 0)", "always the first page in any B-tree index", "magenta"))
+    p.blank()
+
+    note = Text()
+    note.append(f"  {'':>6}    ", style="dim")
+    note.append("  Every B-tree scan starts here. The metapage is the fixed entry point —", style="dim italic")
+    p.add(note)
+    note2 = Text()
+    note2.append(f"  {'':>6}    ", style="dim")
+    note2.append("  always at block 0, always read first to find the root.", style="dim italic")
+    p.add(note2)
+    p.blank()
+
+    root = meta["root"]
+    level = meta["level"]
+    fastroot = int(meta.get("fastroot", root))
+    fastlevel = int(meta.get("fastlevel", level))
+
+    _kv(p, "magic", str(meta.get("magic", "?")),
+        "Identifies this as a B-tree metapage (0x053162 = 'bt1').")
+    _kv(p, "version", str(meta.get("version", "?")),
+        "B-tree implementation version. Determines the on-disk format.")
+    _kv(p, "root", f"page {root}",
+        "Block number of the current root page. This is where every lookup begins.")
+    _kv(p, "level", str(level),
+        f"Tree depth. {level} levels means a lookup reads {level + 1} pages (root → {'internal → ' if level >= 2 else ''}leaf → heap).")
+    _kv(p, "fastroot", f"page {fastroot}",
+        "Optimization: if the true root has only one child, skip directly to this page."
+        if fastroot != root else
+        "Same as root — no redundant top levels to skip.")
+    _kv(p, "fastlevel", str(fastlevel),
+        f"Level of the fast root. Saves {level - fastlevel} page reads when the top of the tree is degenerate."
+        if fastlevel != level else
+        "Same as level — fast root is the real root.")
+    p.blank()
+
+    # ── How this connects to a scan ──
+    heading = Text()
+    heading.append(f"  {'':>6}    ", style="dim")
+    heading.append("  How a scan uses this:", style="bold cyan")
+    p.add(heading)
+    p.blank()
+
+    steps = [
+        f"1. Open index file → read block 0 (this metapage)",
+        f"2. Read btm_root → page {root}",
+        f"3. Navigate the tree: {level} level{'s' if level != 1 else ''} of comparisons",
+        f"4. Reach leaf page → follow TID to heap → check MVCC",
+    ]
+    for step in steps:
+        line = Text()
+        line.append(f"  {'':>6}    ", style="dim")
+        line.append(f"  {step}", style="white")
+        p.add(line)
+    p.blank()
+
+    note3 = Text()
+    note3.append(f"  {'':>6}    ", style="dim")
+    note3.append("  When the root splits, a new root is created and this metapage is", style="dim italic")
+    p.add(note3)
+    note4 = Text()
+    note4.append(f"  {'':>6}    ", style="dim")
+    note4.append("  atomically updated to point to it. Concurrent readers are never lost.", style="dim italic")
+    p.add(note4)
+
+    p.print(title=f"Metapage — {index_name}", border_style="magenta")
 
 
 def _kv(p, key, val, explanation):
