@@ -12,19 +12,28 @@
 
 ## Current Focus
 
-**PostgreSQL** (`modules/00-postgresql/`) — **Chapter 2: Shared Buffers & Read/Write Path** (next)  
-Follow `chapters/02-shared-buffers.md` **Plan** first; same study protocol (English, `pgvis` where it fits, evidence in **Your findings**).
+**Paused** — pick up with **Chapter 2b** or a short **Chapter 2 Retro** when you return.
 
-**Chapter 1 (personal track) — where you left off:** core **Plan §1–§6** hands-on is done in the lab: heap layout, tuples, line pointers, **`DELETE` / `xmax`**, **`VACUUM`**, **`VACUUM FULL`** on a copy (**`oid` vs `relfilenode`**), **FSM / VM** (`pgvis` + `pg_visibility`), **TOAST skim** (`ch1_toast_demo` + `pgvis page --no-data` vs `pg_toast_*`). Segment files and page-size tradeoffs were covered **read / discuss** (no multi-GB demo in this clone). Optional: if you never did it, one **`ls`** in the container on `base/<db_oid>/<relfilenode>*` from Plan §1 — quick closure.
+**PostgreSQL** (`modules/00-postgresql/`) — **Chapter 2: Shared Buffers** — **hands-on Plan §1–§5 done** (see `chapters/02-shared-buffers.md` → **Your findings**). Introduction + theory added to the chapter file; lab tables: `ch2_read_demo`, `ch2_ring_demo`.
 
 ## Completed
 
-*(Chapter 1 not moved here yet — add when you write a short **Retro** in the chapter and call the chapter “closed” for your track.)*
+### Chapter 2 — Shared Buffers (hands-on, personal track) — paused 2026-05-16
+
+- **§1:** `shared_buffers` = 128 MB, 16,384 × 8 KiB slots; `pgvis buffers` (pool utilization, cached relations).
+- **§2:** Cold vs warm seq scan on `ch2_read_demo` — `shared read=1472` (~52 ms) then `shared hit=1472` (~5 ms); disk copy still exists alongside RAM.
+- **§3:** Ring buffer on `ch2_ring_demo` (~116 MB) — ~14,848 heap pages on disk, only ~2,586 stayed in pool after big scan; `lesson1_items` not evicted.
+- **§4:** Clock-sweep usage counts (`usage=1…5`); `ch2_ring_demo` avg_usage≈1 vs hot catalog pages (e.g. `pg_operator` at 5).
+- **§5:** `UPDATE` on `users` → dirty heap/index pages; `CHECKPOINT` → dirty=0; visibility = **commit + MVCC**, not checkpoint.
+
+### Chapter 1 — Physical Storage (hands-on, personal track)
+
+- Plan **§1–§6** done (heap layout, MVCC delete/vacuum, FSM/VM, `VACUUM FULL` copy, TOAST skim). Optional: **Retro** in `01-physical-storage.md` + move here when you “close” Ch 1.
 
 ## Next Up
 
-- **Chapter 2** — `chapters/02-shared-buffers.md` (shared_buffers, read path, `pgvis buffers`, double-buffering intro toward Ch 2b)
-- Optional: Chapter 1 **Retro** paragraph in `01-physical-storage.md` + then mark Ch 1 complete in this file
+- **Chapter 2b** — `chapters/02b-os-page-cache.md` (OS page cache, double caching, ~25% tuning rule)
+- Optional: **Chapter 2 Retro** in `02-shared-buffers.md`; optional Ch 1 **Retro** + `ls` on `base/<db_oid>/` from Ch 1 Plan §1
 
 ## Reference — friend's `main` (upstream lab notes)
 
